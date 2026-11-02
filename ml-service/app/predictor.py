@@ -1,5 +1,5 @@
-"""Preprocessing + inference. Mirrors the encode/scale steps fit in Phase 1's notebook,
-applied to a single incoming student's features instead of a training batch.
+"""Preprocessing + inference. Mirrors the encode/scale steps fitted in the training
+notebook, applied to a single incoming student's features instead of a training batch.
 """
 import numpy as np
 import pandas as pd
@@ -26,7 +26,7 @@ def _feature_row(features: dict) -> list:
 
 
 def _preprocess(raw_row: list) -> np.ndarray:
-    """Applies the same LabelEncoder/StandardScaler fit in Phase 1, same column order."""
+    """Applies the LabelEncoder/StandardScaler fitted in the training notebook, in the same column order."""
     encoded = []
     for col, value in zip(bundle.feature_columns, raw_row):
         if col in bundle.categorical_columns:

@@ -2,9 +2,9 @@
  * EduShield AI — shared data contract.
  *
  * Single source of truth for shapes used across ml-service (Flask), backend (Express),
- * and frontend (React). Nothing here is implementation — it exists so Phase 1 (ML),
- * Phase 2 (backend), and Phase 3 (frontend) all target the same fields instead of
- * discovering mismatches after the fact.
+ * and frontend (React). Nothing here is implementation. Keeping every shape in one file
+ * means the model service, the API and the interface all use the same field names, so a
+ * mismatch shows up as a type error rather than as a bug found at runtime.
  *
  * Naming resolves the inconsistencies found in the current frontend prototype:
  * `course` vs `programme`, `year` as number vs "Year 3" string, and `risk`/`riskLevel`/
@@ -69,10 +69,10 @@ export type RiskTier = 'HIGH' | 'MEDIUM' | 'LOW';
 
 /**
  * One SHAP-derived factor. `contributionPct` is always a positive magnitude;
- * `direction` carries the sign. This is the normalization convention decided in
- * Phase 1 when real SHAP output is produced — raw SHAP values do not arrive as
- * clean percentages, so ml-service must convert (e.g. proportion of the sum of
- * |SHAP value| across all factors for that prediction) before this shape is filled in.
+ * `direction` carries the sign. Raw SHAP values are not percentages, so ml-service
+ * converts them: each factor's absolute SHAP value is divided by the total of the
+ * absolute values across all factors for that prediction, then multiplied by 100.
+ * The factors of one prediction therefore add up to 100.
  */
 export interface ShapFactor {
   feature: string; // human-readable label, e.g. "Attendance"
@@ -115,9 +115,10 @@ export interface Intervention {
 }
 
 /**
- * Generic risk-factor → recommendation mapping, seeded in Phase 1 as a plain data
- * file and consumed server-side by the backend's intervention engine. Deliberately
- * NOT per-student — the same rule fires for any student whose SHAP factors match.
+ * Generic risk-factor → recommendation mapping. The training notebook writes the table
+ * as a plain data file (ml-service/model/intervention_rules.json) and the backend's
+ * intervention engine applies it. Deliberately NOT per-student: the same rule fires for
+ * any student whose SHAP factors match.
  */
 export interface InterventionRule {
   tier: RiskTier;

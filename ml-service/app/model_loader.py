@@ -1,7 +1,7 @@
 """Loads the trained model + preprocessing artifacts once at process start.
 
-Artifacts are produced by notebooks/dropout_model.ipynb (Phase 1) and are not
-regenerated here — this module only loads what already exists in ml-service/model/.
+Artifacts are produced by notebooks/dropout_model.ipynb and are not regenerated
+here; this module only loads what already exists in ml-service/model/.
 """
 import json
 import os
