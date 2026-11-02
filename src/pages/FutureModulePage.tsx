@@ -1,0 +1,5 @@
+import { ArrowLeft, Boxes } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+export function FutureModulePage({title}:{title:string}){return <div className="grid min-h-[70vh] place-items-center"><Card className="max-w-xl p-10 text-center"><span className="mx-auto grid size-16 place-items-center rounded-3xl bg-[#ADDFF1]/45 text-[#003152]"><Boxes size={30}/></span><p className="mt-6 text-xs font-bold uppercase tracking-[.2em] text-slate-400">Next implementation stage</p><h2 className="mt-3 text-3xl font-bold">{title}</h2><p className="mt-3 leading-7 text-slate-500 dark:text-slate-400">The route, navigation, responsive layout, and design-system integration are ready. Functional workflows will be implemented in the corresponding frontend module.</p><Link to="/dashboard" className="mt-7 inline-block"><Button icon={<ArrowLeft size={17}/>}>Return to dashboard</Button></Link></Card></div>}

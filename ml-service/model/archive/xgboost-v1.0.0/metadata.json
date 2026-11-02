@@ -1,0 +1,98 @@
+{
+  "modelVersion": "xgboost-v1.0.0",
+  "modelType": "xgboost",
+  "featureColumns": [
+    "age",
+    "sex",
+    "studytime",
+    "failures",
+    "schoolsup",
+    "famsup",
+    "paid",
+    "activities",
+    "higher",
+    "internet",
+    "romantic",
+    "famrel",
+    "freetime",
+    "goout",
+    "Dalc",
+    "Walc",
+    "health",
+    "absences",
+    "Medu",
+    "Fedu",
+    "G1",
+    "G2"
+  ],
+  "categoricalColumns": [
+    "sex",
+    "schoolsup",
+    "famsup",
+    "paid",
+    "activities",
+    "higher",
+    "internet",
+    "romantic"
+  ],
+  "numericColumns": [
+    "age",
+    "studytime",
+    "failures",
+    "famrel",
+    "freetime",
+    "goout",
+    "Dalc",
+    "Walc",
+    "health",
+    "absences",
+    "Medu",
+    "Fedu",
+    "G1",
+    "G2"
+  ],
+  "metrics": {
+    "accuracy": 0.937799043062201,
+    "f1": 0.8761904761904762,
+    "auc_roc": 0.9792452830188679,
+    "confusion_matrix": [
+      [
+        150,
+        9
+      ],
+      [
+        4,
+        46
+      ]
+    ]
+  },
+  "riskTierThresholds": {
+    "HIGH": 71,
+    "MEDIUM": 31,
+    "LOW": 0
+  },
+  "featureLabels": {
+    "absences": "Attendance",
+    "G1": "First-term grade",
+    "G2": "Second-term grade",
+    "failures": "Past failures",
+    "studytime": "Study time",
+    "goout": "Social outings",
+    "Dalc": "Weekday alcohol use",
+    "Walc": "Weekend alcohol use",
+    "health": "Health status",
+    "famsup": "Family support",
+    "schoolsup": "School support",
+    "internet": "Internet access",
+    "higher": "Aspiration for higher education",
+    "romantic": "Romantic relationship",
+    "famrel": "Family relationship quality",
+    "freetime": "Free time",
+    "age": "Age",
+    "sex": "Gender",
+    "Medu": "Mother's education",
+    "Fedu": "Father's education",
+    "activities": "Extra-curricular activities",
+    "paid": "Paid extra classes"
+  }
+}

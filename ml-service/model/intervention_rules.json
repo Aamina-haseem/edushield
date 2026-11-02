@@ -1,0 +1,72 @@
+[
+  {
+    "tier": "HIGH",
+    "triggerFeature": "default",
+    "action": "Schedule a counseling session within 48 hours"
+  },
+  {
+    "tier": "HIGH",
+    "triggerFeature": "default",
+    "action": "Assign an academic mentor"
+  },
+  {
+    "tier": "MEDIUM",
+    "triggerFeature": "default",
+    "action": "Set up weekly attendance monitoring"
+  },
+  {
+    "tier": "MEDIUM",
+    "triggerFeature": "default",
+    "action": "Suggest joining a study group"
+  },
+  {
+    "tier": "LOW",
+    "triggerFeature": "default",
+    "action": "Provide positive reinforcement"
+  },
+  {
+    "tier": "LOW",
+    "triggerFeature": "default",
+    "action": "Continue regular check-ins"
+  },
+  {
+    "tier": "HIGH",
+    "triggerFeature": "absences",
+    "action": "Arrange an urgent attendance review meeting"
+  },
+  {
+    "tier": "HIGH",
+    "triggerFeature": "failures",
+    "action": "Refer to academic recovery / repeat-module support"
+  },
+  {
+    "tier": "HIGH",
+    "triggerFeature": "dalc",
+    "action": "Refer to student wellbeing and counseling services"
+  },
+  {
+    "tier": "HIGH",
+    "triggerFeature": "walc",
+    "action": "Refer to student wellbeing and counseling services"
+  },
+  {
+    "tier": "MEDIUM",
+    "triggerFeature": "g1",
+    "action": "Recommend tutoring or supplementary academic support"
+  },
+  {
+    "tier": "MEDIUM",
+    "triggerFeature": "g2",
+    "action": "Recommend tutoring or supplementary academic support"
+  },
+  {
+    "tier": "MEDIUM",
+    "triggerFeature": "famsup",
+    "action": "Connect with student support services for family support options"
+  },
+  {
+    "tier": "MEDIUM",
+    "triggerFeature": "studytime",
+    "action": "Refer to a study-skills workshop"
+  }
+]

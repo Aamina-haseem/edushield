@@ -1,0 +1,2 @@
+import { Link } from 'react-router-dom';
+export function NotFoundPage(){return <main className="grid min-h-screen place-items-center bg-[#f6f8fc] p-6 dark:bg-slate-950"><div className="text-center"><p className="text-8xl font-black text-[#ADDFF1]">404</p><h1 className="mt-3 text-3xl font-bold dark:text-white">Page not found</h1><p className="mt-3 text-slate-500">The requested EduShield workspace does not exist.</p><Link className="mt-6 inline-block rounded-xl bg-[#003152] px-5 py-3 font-semibold text-white" to="/dashboard">Return to dashboard</Link></div></main>}
