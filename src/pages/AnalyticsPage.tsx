@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { BarList } from '@/components/charts/BarList';
+import { RISK_GRADIENTS, useChartTheme } from '@/components/charts/chartTheme';
+import { PlanFlow } from '@/components/charts/PlanFlow';
 import { Card } from '@/components/ui/Card';
 import { PageHeader, SectionTitle, Stat } from '@/components/common/Page';
 import { getAnalyticsOverview, getAnalyticsSummary, getModelInfo } from '@/services/dashboard';
 
-const RISK_COLORS = { HIGH: '#ef4444', MEDIUM: '#f59e0b', LOW: '#10b981' } as const;
-const STATUS_COLORS = { pending: '#94a3b8', in_progress: '#0ea5e9', completed: '#10b981' } as const;
-const tooltipStyle = { borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 18px 50px rgba(15,23,42,.12)' };
 const pct = (value: number) => Math.round(value * 1000) / 10;
 const MODEL_NAMES: Record<string, string> = {
   logistic_regression: 'Logistic Regression',
@@ -26,7 +26,26 @@ function ChartCard({ title, description, children, height = 300 }: { title: stri
   );
 }
 
+/** Vertical gradients shared by the bar charts below, passed as a plain <defs> element so Recharts renders it. */
+const gradientStops = (id: string, from: string, to: string) => (
+  <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stopColor={from} />
+    <stop offset="100%" stopColor={to} />
+  </linearGradient>
+);
+const barGradients = (
+  <defs>
+    {gradientStops('an-high', RISK_GRADIENTS.HIGH.from, RISK_GRADIENTS.HIGH.to)}
+    {gradientStops('an-medium', RISK_GRADIENTS.MEDIUM.from, RISK_GRADIENTS.MEDIUM.to)}
+    {gradientStops('an-low', RISK_GRADIENTS.LOW.from, RISK_GRADIENTS.LOW.to)}
+    {gradientStops('an-f1', '#ADDFF1', '#2cc4d6')}
+    {gradientStops('an-recall', '#5b9fe0', '#1d4f86')}
+    {gradientStops('an-auc', '#a9c3d4', '#5f7f97')}
+  </defs>
+);
+
 export function AnalyticsPage() {
+  const chart = useChartTheme();
   const summaryQuery = useQuery({ queryKey: ['analytics-summary'], queryFn: getAnalyticsSummary });
   const overviewQuery = useQuery({ queryKey: ['analytics-overview'], queryFn: getAnalyticsOverview });
   const modelQuery = useQuery({ queryKey: ['model-info'], queryFn: getModelInfo });
@@ -43,6 +62,7 @@ export function AnalyticsPage() {
   const model = modelQuery.data;
   const assessed = summary.riskDistribution.HIGH + summary.riskDistribution.MEDIUM + summary.riskDistribution.LOW;
   const openInterventions = (summary.interventionsByStatus.pending ?? 0) + (summary.interventionsByStatus.in_progress ?? 0);
+  const axis = { axisLine: false, tickLine: false, tick: chart.tick } as const;
 
   const absenceData = overview.absenceBands.map((b) => ({ ...b, highRiskShare: b.students ? Math.round((b.highRisk / b.students) * 1000) / 10 : 0 }));
   const modelComparison = Object.entries(model.cvMetrics ?? {}).map(([name, m]) => ({
@@ -53,7 +73,7 @@ export function AnalyticsPage() {
   }));
   // Most inputs first: the API's JSON key order is alphabetical, not the order the grades are removed in.
   const sensitivity = Object.entries(model.gradeSensitivityCv ?? {}).sort(([, a], [, b]) => b.f1 - a.f1);
-  const interventionsByTier = overview.interventionsByTier.filter((t) => t.pending + t.in_progress + t.completed > 0);
+  const drivers = overview.topRiskDrivers.map((d) => ({ label: d.feature, value: d.students }));
 
   return (
     <div className="space-y-7">
@@ -72,63 +92,55 @@ export function AnalyticsPage() {
 
       <div className="grid gap-5 xl:grid-cols-2">
         <ChartCard title="Risk tier by programme" description="Latest prediction per student">
-          <BarChart data={overview.byProgramme} layout="vertical" margin={{ left: 40 }}>
-            <CartesianGrid strokeDasharray="4 4" horizontal={false} stroke="#e2e8f0" />
-            <XAxis type="number" allowDecimals={false} />
-            <YAxis type="category" dataKey="group" width={170} />
-            <Tooltip contentStyle={tooltipStyle} />
-            <Legend />
-            <Bar dataKey="HIGH" stackId="tier" fill={RISK_COLORS.HIGH} />
-            <Bar dataKey="MEDIUM" stackId="tier" fill={RISK_COLORS.MEDIUM} />
-            <Bar dataKey="LOW" stackId="tier" fill={RISK_COLORS.LOW} radius={[0, 8, 8, 0]} />
+          <BarChart data={overview.byProgramme} layout="vertical" margin={{ left: 0, right: 16 }} barSize={16}>
+            {barGradients}
+            <CartesianGrid strokeDasharray="4 4" horizontal={false} stroke={chart.grid} />
+            <XAxis type="number" allowDecimals={false} {...axis} />
+            <YAxis type="category" dataKey="group" width={150} {...axis} />
+            <Tooltip {...chart.tooltip} />
+            <Legend wrapperStyle={chart.legend} iconType="circle" />
+            <Bar dataKey="HIGH" name="High" stackId="tier" fill="url(#an-high)" />
+            <Bar dataKey="MEDIUM" name="Medium" stackId="tier" fill="url(#an-medium)" />
+            <Bar dataKey="LOW" name="Low" stackId="tier" fill="url(#an-low)" radius={[0, 8, 8, 0]} />
           </BarChart>
         </ChartCard>
 
-        <ChartCard title="Strongest risk drivers" description="How often each factor is the top SHAP risk-increaser, HIGH and MEDIUM students">
-          <BarChart data={overview.topRiskDrivers} layout="vertical" margin={{ left: 40 }}>
-            <CartesianGrid strokeDasharray="4 4" horizontal={false} stroke="#e2e8f0" />
-            <XAxis type="number" allowDecimals={false} />
-            <YAxis type="category" dataKey="feature" width={170} />
-            <Tooltip contentStyle={tooltipStyle} formatter={(value) => [`${value} students`, 'Top driver for']} />
-            <Bar dataKey="students" fill="#0284c7" radius={[0, 8, 8, 0]} />
-          </BarChart>
-        </ChartCard>
+        <Card className="p-6">
+          <SectionTitle title="Strongest risk drivers" description="How often each factor is the top SHAP risk-increaser, HIGH and MEDIUM students" />
+          <div className="mt-6"><BarList items={drivers} /></div>
+          {drivers[0] && (
+            <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+              <span className="font-semibold text-slate-800 dark:text-white">{drivers[0].label}</span> is the most frequent top driver, for {drivers[0].value} students.
+            </p>
+          )}
+        </Card>
 
         <ChartCard title="High-risk share by absence count" description="Percentage of students in each absence band who are in the HIGH tier">
-          <BarChart data={absenceData}>
-            <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#e2e8f0" />
-            <XAxis dataKey="band" label={{ value: 'Recorded absences', position: 'insideBottom', offset: -4 }} height={44} />
-            <YAxis unit="%" />
-            <Tooltip contentStyle={tooltipStyle} formatter={(value, _name, item) => [`${value}% (${item.payload.highRisk} of ${item.payload.students})`, 'High risk']} />
-            <Bar dataKey="highRiskShare" fill={RISK_COLORS.HIGH} radius={[8, 8, 0, 0]} />
+          <BarChart data={absenceData} barSize={34}>
+            {barGradients}
+            <CartesianGrid strokeDasharray="4 4" vertical={false} stroke={chart.grid} />
+            <XAxis dataKey="band" {...axis} label={{ value: 'Recorded absences', position: 'insideBottom', offset: -4, fill: chart.tick.fill, fontSize: 12 }} height={44} />
+            <YAxis unit="%" {...axis} />
+            <Tooltip {...chart.tooltip} formatter={(value, _name, item) => [`${value}% (${item.payload.highRisk} of ${item.payload.students})`, 'High risk']} />
+            <Bar dataKey="highRiskShare" fill="url(#an-high)" radius={[10, 10, 4, 4]} />
           </BarChart>
         </ChartCard>
 
-        <ChartCard title="Interventions by tier and status" description="Every support plan on record">
-          <BarChart data={interventionsByTier}>
-            <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#e2e8f0" />
-            <XAxis dataKey="tier" />
-            <YAxis allowDecimals={false} />
-            <Tooltip contentStyle={tooltipStyle} />
-            <Legend />
-            <Bar dataKey="pending" stackId="status" name="Pending" fill={STATUS_COLORS.pending} />
-            <Bar dataKey="in_progress" stackId="status" name="In progress" fill={STATUS_COLORS.in_progress} />
-            <Bar dataKey="completed" stackId="status" name="Completed" fill={STATUS_COLORS.completed} radius={[8, 8, 0, 0]} />
-          </BarChart>
-        </ChartCard>
+        <PlanFlow byTier={overview.interventionsByTier} />
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1fr_420px]">
         <ChartCard title="Model comparison" description="Mean of 5 grouped cross-validation folds on the training split — how the deployed model was chosen" height={320}>
-          <BarChart data={modelComparison}>
-            <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#e2e8f0" />
-            <XAxis dataKey="model" />
-            <YAxis unit="%" domain={[0, 100]} />
-            <Tooltip contentStyle={tooltipStyle} formatter={(value) => `${value}%`} />
-            <Legend />
-            <Bar dataKey="F1" fill="#0284c7" radius={[6, 6, 0, 0]} />
-            <Bar dataKey="Recall" fill="#7dd3fc" radius={[6, 6, 0, 0]} />
-            <Bar dataKey="ROC AUC" fill="#94a3b8" radius={[6, 6, 0, 0]} />
+          <BarChart data={modelComparison} barGap={6}>
+            {barGradients}
+            <CartesianGrid strokeDasharray="4 4" vertical={false} stroke={chart.grid} />
+            <XAxis dataKey="model" {...axis} />
+            <YAxis unit="%" domain={[0, 100]} {...axis} />
+            <Tooltip {...chart.tooltip} formatter={(value) => `${value}%`} />
+            <Legend wrapperStyle={chart.legend} iconType="circle" />
+            <Bar dataKey="F1" fill="url(#an-f1)" radius={[8, 8, 0, 0]} />
+            <Bar dataKey="Recall" fill="url(#an-recall)" radius={[8, 8, 0, 0]} />
+            <Bar dataKey="ROC AUC" fill="url(#an-auc)" radius={[8, 8, 0, 0]} />
           </BarChart>
         </ChartCard>
 
@@ -137,16 +149,16 @@ export function AnalyticsPage() {
           <table className="mt-5 w-full text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-800">
-                <th className="py-2">Inputs</th><th>F1</th><th>Recall</th><th>AUC</th>
+                <th className="py-2">Inputs</th><th className="px-2">F1</th><th className="px-2">Recall</th><th className="px-2">AUC</th>
               </tr>
             </thead>
             <tbody>
               {sensitivity.map(([label, m]) => (
                 <tr key={label} className="border-b border-slate-100 dark:border-slate-800">
                   <td className="py-3 pr-3">{label}</td>
-                  <td className="font-bold">{pct(m.f1)}%</td>
-                  <td>{pct(m.recall)}%</td>
-                  <td>{pct(m.roc_auc)}%</td>
+                  <td className="px-2 font-bold">{pct(m.f1)}%</td>
+                  <td className="px-2">{pct(m.recall)}%</td>
+                  <td className="px-2">{pct(m.roc_auc)}%</td>
                 </tr>
               ))}
             </tbody>

@@ -51,29 +51,29 @@ export function ResetPasswordPage() {
     <AuthShell>
       {!token ? (
         <div>
-          <h1 className="text-4xl font-semibold tracking-[-0.04em] text-slate-950 dark:text-white">Reset link missing</h1>
+          <h2 className="text-3xl font-semibold tracking-[-0.04em] text-slate-950 dark:text-white">Reset link missing</h2>
           <p className="mt-4 text-sm leading-6 text-slate-500 dark:text-slate-400">Open the link from your password-reset email, or request a new one.</p>
-          <Link className="mt-8 inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#003152] text-sm font-semibold text-white" to="/forgot-password">Request a new link</Link>
+          <Link className="mt-8 inline-flex h-12 w-full items-center justify-center es-btn-primary rounded-full text-sm font-semibold" to="/forgot-password">Request a new link</Link>
         </div>
       ) : complete ? (
         <div>
           <div className="grid h-14 w-14 place-items-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
             <CheckCircle2 className="h-7 w-7" />
           </div>
-          <h1 className="mt-6 text-4xl font-semibold tracking-[-0.04em] text-slate-950 dark:text-white">Password updated</h1>
+          <h2 className="mt-6 text-3xl font-semibold tracking-[-0.04em] text-slate-950 dark:text-white">Password updated</h2>
           <p className="mt-4 text-sm leading-6 text-slate-500 dark:text-slate-400">Your password has been changed. Sign in with your new password.</p>
-          <Link className="mt-8 inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#003152] text-sm font-semibold text-white" to="/login">Return to sign in</Link>
+          <Link className="mt-8 inline-flex h-12 w-full items-center justify-center es-btn-primary rounded-full text-sm font-semibold" to="/login">Return to sign in</Link>
         </div>
       ) : (
         <div>
           <p className="text-sm font-semibold text-[#0E7490] dark:text-[#ADDFF1]">Secure password update</p>
-          <h1 className="mt-2 text-4xl font-semibold tracking-[-0.04em] text-slate-950 dark:text-white">Create a new password</h1>
+          <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950 dark:text-white">Create a new password</h2>
           <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-slate-400">At least eight characters, with at least one letter and one number.</p>
           <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
             {passwordField('New password', password, setPassword, 'new-password')}
             {passwordField('Confirm password', confirmation, setConfirmation, 'confirm-password')}
             {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-200" role="alert">{error}</div> : null}
-            <button className="h-12 w-full rounded-2xl bg-[#003152] text-sm font-semibold text-white disabled:opacity-60" type="submit" disabled={saving}>
+            <button className="h-12 w-full es-btn-primary rounded-full text-sm font-semibold disabled:opacity-60" type="submit" disabled={saving}>
               {saving ? 'Updating…' : 'Update password'}
             </button>
           </form>

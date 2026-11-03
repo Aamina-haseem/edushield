@@ -44,7 +44,7 @@ export function ReportsPage() {
       <div className="grid gap-5 xl:grid-cols-[380px_1fr]">
         <Card className="h-fit p-6">
           <div className="flex items-center gap-3">
-            <span className="grid size-12 place-items-center rounded-2xl bg-sky-100 text-[#003152]"><FileBarChart /></span>
+            <span className="grid size-12 place-items-center rounded-2xl bg-sky-100 text-[#003152] dark:bg-[#ADDFF1]/15 dark:text-[#ADDFF1]"><FileBarChart /></span>
             <div><h2 className="font-bold">Report builder</h2><p className="text-sm text-slate-500">Built from the current database state</p></div>
           </div>
           <div className="mt-5 space-y-3">

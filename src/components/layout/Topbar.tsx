@@ -75,7 +75,7 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/85">
+    <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl dark:border-[#ADDFF1]/10 dark:bg-slate-950/45">
       <div className="flex h-20 items-center gap-4 px-4 sm:px-6 lg:px-8">
         <button onClick={onMenu} className="rounded-xl p-2 hover:bg-slate-100 dark:hover:bg-slate-800 lg:hidden" aria-label="Open navigation">
           <Menu />

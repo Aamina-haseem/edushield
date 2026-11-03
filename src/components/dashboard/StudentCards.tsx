@@ -54,7 +54,7 @@ export function StudentCards({ students, openInterventionStudentIds }: StudentCa
             <motion.div key={student.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.06 }}>
               <Card className="h-full p-5 sm:p-6">
                 <div className="flex flex-wrap items-start gap-4">
-                  <span className="grid size-12 place-items-center rounded-2xl bg-[#ADDFF1]/45 font-bold text-[#003152]">
+                  <span className="grid size-12 place-items-center rounded-2xl bg-[#ADDFF1]/45 font-bold text-[#003152] dark:bg-[#ADDFF1]/15 dark:text-[#ADDFF1]">
                     {student.studentName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                   </span>
                   <div className="min-w-0 flex-1">

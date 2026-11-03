@@ -9,7 +9,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = localStorage.getItem('edushield-theme');
     if (saved === 'light' || saved === 'dark') return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    // The dark "stage" theme is EduShield's signature look; the toggle still offers light mode.
+    return 'dark';
   });
 
   useEffect(() => {

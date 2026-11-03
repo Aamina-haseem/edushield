@@ -1,18 +1,207 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * EduShield theme: navy (#003152) and aqua-teal (#ADDFF1), with a dark "cinematic" mode —
+ * deep navy-black backdrop, glowing teal curtain folds and frosted-glass cards.
+ * Page components keep their Tailwind classes; this file decides how they look.
+ */
+
 :root {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --es-navy: #003152;
+  --es-aqua: #addff1;
+  --es-teal: #2cc4d6;
+  font-family: "DM Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #0f172a;
-  background: #f6f8fc;
+  background: #eef5f9;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
+
+/* Dark mode re-tints Tailwind's slate scale towards navy, so every existing
+   dark:bg-slate-* / dark:text-slate-* class picks up the new palette. */
+.dark {
+  --color-slate-50: #f1f7fb;
+  --color-slate-100: #e3eef5;
+  --color-slate-200: #c9dbe7;
+  --color-slate-300: #a9c3d4;
+  --color-slate-400: #84a2b8;
+  --color-slate-500: #5f7f97;
+  --color-slate-600: #3f6079;
+  --color-slate-700: #1f3d55;
+  --color-slate-800: #112a40;
+  --color-slate-900: #0a1d2e;
+  --color-slate-950: #040e19;
+  color-scheme: dark;
+  background: #020a13;
+}
+
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { margin: 0; min-width: 320px; min-height: 100vh; }
+h1, h2, h3, .font-display { font-family: Manrope, "DM Sans", ui-sans-serif, system-ui, sans-serif; }
 button, input { font: inherit; }
 button { cursor: pointer; }
 ::selection { background: #addff1; color: #003152; }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; border: 3px solid transparent; background-clip: padding-box; }
+.dark ::-webkit-scrollbar-thumb { background: #1f3d55; border: 3px solid transparent; background-clip: padding-box; }
+
+/* Components sit below Tailwind's utilities, so a className passed to a component still wins. */
+@layer components {
+  /* Fixed page backdrop behind the app shell. */
+  .es-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(900px 480px at 85% -10%, rgba(173, 223, 241, 0.55), transparent 65%),
+      radial-gradient(700px 420px at 0% 0%, rgba(0, 49, 82, 0.08), transparent 70%),
+      #eef5f9;
+  }
+  .dark .es-backdrop {
+    background:
+      radial-gradient(820px 520px at 68% 4%, rgba(44, 196, 214, 0.26), transparent 62%),
+      radial-gradient(620px 460px at 22% -6%, rgba(0, 92, 150, 0.5), transparent 66%),
+      radial-gradient(1100px 620px at 50% 115%, rgba(0, 49, 82, 0.55), transparent 70%),
+      #020a13;
+  }
+  .dark .es-backdrop::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(90deg, transparent 0 22px, rgba(173, 223, 241, 0.07) 34px, rgba(0, 0, 0, 0.22) 52px, transparent 64px),
+      repeating-linear-gradient(90deg, transparent 0 57px, rgba(173, 223, 241, 0.05) 80px, transparent 101px);
+    -webkit-mask-image: radial-gradient(1000px 640px at 62% 0%, #000 0%, transparent 72%);
+    mask-image: radial-gradient(1000px 640px at 62% 0%, #000 0%, transparent 72%);
+  }
+
+  /* Cards: white with a soft aqua shadow in light mode, frosted navy glass in dark mode. */
+  .es-card {
+    background: #ffffff;
+    border: 1px solid rgba(201, 219, 231, 0.75);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 18px 50px rgba(0, 49, 82, 0.07);
+  }
+  .dark .es-card {
+    background: linear-gradient(180deg, rgba(17, 48, 72, 0.58) 0%, rgba(5, 20, 33, 0.68) 100%);
+    border-color: rgba(173, 223, 241, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 24px 60px rgba(0, 0, 0, 0.35);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
+  }
+
+  /* Buttons. */
+  .es-btn-primary {
+    background: linear-gradient(135deg, #003152 0%, #0b5a7a 100%);
+    color: #ffffff;
+    box-shadow: 0 12px 30px rgba(0, 49, 82, 0.22);
+  }
+  .es-btn-primary:hover { filter: brightness(1.12); }
+  .dark .es-btn-primary {
+    background: linear-gradient(135deg, #addff1 0%, #2cc4d6 100%);
+    color: #003152;
+    box-shadow: 0 0 0 1px rgba(173, 223, 241, 0.25), 0 12px 36px rgba(44, 196, 214, 0.28);
+  }
+  .es-btn-secondary {
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid #c9dbe7;
+  }
+  .es-btn-secondary:hover { background: #f1f7fb; }
+  .dark .es-btn-secondary {
+    background: rgba(173, 223, 241, 0.08);
+    color: #e3eef5;
+    border-color: rgba(173, 223, 241, 0.18);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+  .dark .es-btn-secondary:hover { background: rgba(173, 223, 241, 0.14); }
+
+  /* Page titles: solid navy in light mode, white-to-aqua gradient in dark mode. */
+  .es-title { color: #020617; }
+  .dark .es-title {
+    background: linear-gradient(100deg, #ffffff 0%, #d9eef7 45%, #addff1 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .es-gradient-text {
+    background: linear-gradient(100deg, #ffffff 0%, #addff1 55%, #5fd6e4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* The dashboard and login "stage": navy with teal curtain folds and a spotlight. */
+  .es-stage {
+    background:
+      radial-gradient(520px 340px at 30% 0%, rgba(44, 196, 214, 0.34), transparent 70%),
+      radial-gradient(600px 400px at 90% 100%, rgba(173, 223, 241, 0.16), transparent 70%),
+      linear-gradient(160deg, #003152 0%, #01223a 55%, #020d18 100%);
+  }
+  /* Login page curtain (Curtain.tsx): lit at the top-centre and on the lower-left sweep, falling
+     into darkness at the top corners and on the right. */
+  .es-curtain-light {
+    -webkit-mask-image:
+      radial-gradient(ellipse 72% 78% at 38% 26%, #000 34%, transparent 82%),
+      radial-gradient(ellipse 34% 46% at 10% 100%, #000 22%, transparent 82%);
+    mask-image:
+      radial-gradient(ellipse 72% 78% at 38% 26%, #000 34%, transparent 82%),
+      radial-gradient(ellipse 34% 46% at 10% 100%, #000 22%, transparent 82%);
+  }
+  /* Login opening: the two velvet drapes that part on the first visit of a session. */
+  .es-drape {
+    background:
+      repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.55) 0px, rgba(0, 0, 0, 0.12) 13px, rgba(173, 223, 241, 0.22) 25px, rgba(0, 0, 0, 0.08) 37px, rgba(0, 0, 0, 0.6) 57px),
+      repeating-linear-gradient(90deg, transparent 0 83px, rgba(173, 223, 241, 0.1) 104px, transparent 133px),
+      linear-gradient(180deg, #0b5672 0%, #07405d 45%, #03243a 100%);
+    box-shadow: 0 0 90px rgba(0, 0, 0, 0.85);
+  }
+  /* Hanging fabric sways from the top; the orbit's dashes drift; dust motes rise through the spotlight. */
+  @keyframes es-sway {
+    0%, 100% { transform: skewX(0deg) translateX(0); }
+    50% { transform: skewX(-0.7deg) translateX(8px); }
+  }
+  @keyframes es-orbit-drift {
+    to { stroke-dashoffset: -400; }
+  }
+  @keyframes es-mote {
+    0% { transform: translate(0, 0); opacity: 0; }
+    15%, 80% { opacity: var(--mote-opacity); }
+    100% { transform: translate(var(--mote-dx), -110px); opacity: 0; }
+  }
+
+  /* The framed panel over the curtain: see-through on the left, darkening towards the right.
+     The first shadow spreads across the whole page, dimming the curtain outside the panel so the
+     panel reads as a lit window with crisp rounded corners; the inset line adds a faint top rim. */
+  .es-panel {
+    background: linear-gradient(90deg, rgba(1, 8, 15, 0.12) 0%, rgba(1, 8, 15, 0.38) 45%, rgba(1, 8, 15, 0.86) 78%, rgba(1, 8, 15, 0.94) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow:
+      0 0 0 100vmax rgba(1, 5, 10, 0.42),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 40px 120px rgba(0, 0, 0, 0.6);
+  }
+  /* Dark glass tile with a teal glow in its top-left corner (login info cards and sign-in card). */
+  .es-tile {
+    background:
+      radial-gradient(120% 90% at 0% 0%, rgba(44, 196, 214, 0.2), transparent 55%),
+      linear-gradient(180deg, rgba(10, 28, 44, 0.78), rgba(3, 12, 21, 0.86));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+  }
+
+  .es-curtain {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      repeating-linear-gradient(90deg, transparent 0 18px, rgba(173, 223, 241, 0.10) 28px, rgba(0, 0, 0, 0.28) 44px, transparent 54px),
+      repeating-linear-gradient(90deg, transparent 0 47px, rgba(173, 223, 241, 0.07) 66px, transparent 84px);
+    -webkit-mask-image: radial-gradient(700px 460px at 32% 0%, #000 0%, transparent 78%);
+    mask-image: radial-gradient(700px 460px at 32% 0%, #000 0%, transparent 78%);
+  }
+}

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Eye, EyeOff, GraduationCap, LockKeyhole, Mail } from 'lucide-react';
+import { Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AuthShell } from '@/features/auth/components/AuthShell';
@@ -37,20 +37,13 @@ export function LoginPage() {
   return (
     <AuthShell>
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
-        <div className="mb-8 lg:hidden">
-          <div className="mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-[#003152] text-[#ADDFF1]">
-            <GraduationCap className="h-6 w-6" />
-          </div>
-          <p className="text-sm font-semibold text-[#003152] dark:text-[#ADDFF1]">EduShield AI</p>
-        </div>
-
-        <p className="text-sm font-semibold text-[#0E7490] dark:text-[#ADDFF1]">Secure university access</p>
-        <h2 className="mt-2 text-4xl font-semibold tracking-[-0.04em] text-slate-950 dark:text-white">Welcome back</h2>
+        <p className="text-sm font-semibold text-[#0E7490] dark:text-[#ADDFF1]">Staff and student sign-in</p>
+        <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950 dark:text-white">Welcome back</h2>
         <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-slate-400">
           Sign in to continue to your student success workspace.
         </p>
 
-        <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <label className="block">
             <span className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Email address</span>
             <div className="relative">
@@ -111,7 +104,7 @@ export function LoginPage() {
           ) : null}
 
           <button
-            className="flex h-12 w-full items-center justify-center rounded-2xl bg-[#003152] text-sm font-semibold text-white shadow-lg shadow-[#003152]/20 transition hover:-translate-y-0.5 hover:bg-[#06456f] disabled:cursor-not-allowed disabled:opacity-65"
+            className="es-btn-primary flex h-12 w-full items-center justify-center rounded-full text-sm font-semibold transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-65"
             disabled={isSubmitting}
             type="submit"
           >

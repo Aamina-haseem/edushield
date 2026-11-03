@@ -36,7 +36,7 @@ export function ForgotPasswordPage() {
           <div className="grid h-14 w-14 place-items-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
             <CheckCircle2 className="h-7 w-7" />
           </div>
-          <h1 className="mt-6 text-4xl font-semibold tracking-[-0.04em] text-slate-950 dark:text-white">Check your inbox</h1>
+          <h2 className="mt-6 text-3xl font-semibold tracking-[-0.04em] text-slate-950 dark:text-white">Check your inbox</h2>
           <p className="mt-4 text-sm leading-6 text-slate-500 dark:text-slate-400">
             If an account exists for <span className="font-semibold text-slate-700 dark:text-slate-200">{email}</span>, a password-reset link has been sent. The link works once and expires after 30 minutes.
           </p>
@@ -47,7 +47,7 @@ export function ForgotPasswordPage() {
       ) : (
         <div>
           <p className="text-sm font-semibold text-[#0E7490] dark:text-[#ADDFF1]">Account recovery</p>
-          <h1 className="mt-2 text-4xl font-semibold tracking-[-0.04em] text-slate-950 dark:text-white">Reset your password</h1>
+          <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950 dark:text-white">Reset your password</h2>
           <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-slate-400">Enter your university email and we’ll send a secure recovery link.</p>
           <form className="mt-8" onSubmit={handleSubmit}>
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200" htmlFor="recovery-email">University email</label>
@@ -63,7 +63,7 @@ export function ForgotPasswordPage() {
               />
             </div>
             {error && <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-200" role="alert">{error}</p>}
-            <button className="mt-5 h-12 w-full rounded-2xl bg-[#003152] text-sm font-semibold text-white disabled:opacity-60" type="submit" disabled={sending}>
+            <button className="mt-5 h-12 w-full es-btn-primary rounded-full text-sm font-semibold disabled:opacity-60" type="submit" disabled={sending}>
               {sending ? 'Sending…' : 'Send recovery link'}
             </button>
           </form>

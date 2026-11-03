@@ -26,7 +26,7 @@ export function QuickActions() {
             onClick={() => navigate(to)}
           >
             <Card className="h-full p-5 transition hover:border-[#ADDFF1]">
-              <span className="grid size-11 place-items-center rounded-2xl bg-[#ADDFF1]/45 text-[#003152]"><Icon size={21} /></span>
+              <span className="grid size-11 place-items-center rounded-2xl bg-[#ADDFF1]/45 text-[#003152] dark:bg-[#ADDFF1]/15 dark:text-[#ADDFF1]"><Icon size={21} /></span>
               <p className="mt-4 font-bold">{title}</p>
               <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">{description}</p>
             </Card>

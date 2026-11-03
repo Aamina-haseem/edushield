@@ -26,7 +26,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const visibleItems = items.filter((item) => !user || item.roles.includes(user.role));
 
   const content = (
-    <motion.aside animate={{ width: collapsed ? 88 : 280 }} className="flex h-full flex-col border-r border-white/10 bg-[#071f33] text-white">
+    <motion.aside animate={{ width: collapsed ? 88 : 280 }} className="flex h-full flex-col border-r border-white/10 bg-[#071f33] text-white dark:border-[#ADDFF1]/10 dark:bg-[#020c16]/70 dark:backdrop-blur-2xl">
       <div className="flex h-20 items-center justify-between border-b border-white/10 px-5">
         <div className="flex items-center gap-3 overflow-hidden">
           <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[#ADDFF1] text-[#003152]"><GraduationCap size={24} /></span>
@@ -37,7 +37,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
       </div>
       <nav className="flex-1 space-y-2 overflow-y-auto p-4">
         {visibleItems.map(({ to, label, icon: Icon }) => (
-          <NavLink key={to} to={to} onClick={onMobileClose} title={collapsed ? label : undefined} className={({ isActive }) => cn('group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-sky-100/70 transition hover:bg-white/10 hover:text-white', isActive && 'bg-white text-[#003152] shadow-xl hover:bg-white hover:text-[#003152]', collapsed && 'justify-center')}>
+          <NavLink key={to} to={to} onClick={onMobileClose} title={collapsed ? label : undefined} className={({ isActive }) => cn('group flex items-center gap-3 rounded-full px-4 py-3 text-sm font-medium transition', isActive ? 'bg-white font-semibold text-[#003152] shadow-xl shadow-[#2cc4d6]/20 dark:bg-[linear-gradient(135deg,#ADDFF1,#2cc4d6)]' : 'text-sky-100/70 hover:bg-white/10 hover:text-white', collapsed && 'justify-center')}>
             <Icon size={20} className="shrink-0" />{!collapsed && <span>{label}</span>}
           </NavLink>
         ))}
