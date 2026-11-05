@@ -1,7 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Request } from 'express';
+import { AxiosError } from 'axios';
 import { isAllowedOrigin, toClientError } from '../src/app.js';
+import { MlServiceUnavailableError, toMlServiceError } from '../src/services/mlServiceClient.js';
 import { createLoginLimiter } from '../src/middleware/rateLimit.js';
 import { canAccessStudent } from '../src/middleware/auth.js';
 
@@ -19,6 +21,25 @@ test('CORS accepts the frontend on any local dev port, but not other sites', () 
   assert.equal(isAllowedOrigin(undefined), true);
   assert.equal(isAllowedOrigin('https://evil.example.com'), false);
   assert.equal(isAllowedOrigin('http://localhost.evil.com'), false);
+});
+
+test('an unreachable or failing ML service becomes a clear 503, not a 500', () => {
+  const refused = toMlServiceError(new AxiosError('connect ECONNREFUSED 127.0.0.1:8001', 'ECONNREFUSED'));
+  assert.ok(refused instanceof MlServiceUnavailableError);
+  assert.deepEqual(toClientError(refused), {
+    status: 503,
+    message: 'The AI prediction service is unavailable right now. Please try again shortly.',
+  });
+  const timedOut = toMlServiceError(new AxiosError('timeout of 10000ms exceeded', 'ECONNABORTED'));
+  assert.equal(toClientError(timedOut)?.status, 503);
+  const crashed = toMlServiceError(new AxiosError('fail', 'ERR_BAD_RESPONSE', undefined, undefined, { status: 500 } as never));
+  assert.equal(toClientError(crashed)?.status, 503);
+
+  // A 4xx means the ML service rejected the request: not "unavailable", so it is left as it was.
+  const rejected = new AxiosError('bad', 'ERR_BAD_REQUEST', undefined, undefined, { status: 400 } as never);
+  assert.equal(toMlServiceError(rejected), rejected);
+  const other = new Error('boom');
+  assert.equal(toMlServiceError(other), other);
 });
 
 test('unknown errors stay server errors', () => {

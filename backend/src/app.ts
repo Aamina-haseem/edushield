@@ -10,6 +10,7 @@ import { meDashboardRouter } from './routes/dashboard.js';
 import { analyticsRouter } from './routes/analytics.js';
 import { reportsRouter } from './routes/reports.js';
 import { systemRouter } from './routes/system.js';
+import { MlServiceUnavailableError } from './services/mlServiceClient.js';
 
 /** CORS_ORIGIN may list several origins, comma-separated. Outside production, any
  * localhost/127.0.0.1 port is also accepted: Vite moves to 5174, 5175… when 5173 is taken, and
@@ -51,6 +52,7 @@ export function createApp() {
   // rejected promise that bypassed asyncHandler would otherwise crash the process (Node
   // terminates on unhandled rejections by default).
   app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    if (err instanceof MlServiceUnavailableError) console.warn(`[ml-service] unavailable — ${err.detail}`);
     const clientError = toClientError(err);
     if (clientError) return res.status(clientError.status).json({ message: clientError.message });
     console.error(err);
@@ -63,6 +65,7 @@ export function createApp() {
 /** Bad input that only surfaces once it reaches Postgres (or the JSON body parser) is the
  * caller's fault, not a server fault — answer 400 instead of a misleading 500. */
 export function toClientError(err: unknown): { status: number; message: string } | null {
+  if (err instanceof MlServiceUnavailableError) return { status: err.status, message: err.message };
   if (typeof err !== 'object' || err === null) return null;
   const { code, type } = err as { code?: string; type?: string };
   if (type === 'entity.parse.failed') return { status: 400, message: 'Malformed JSON body' };

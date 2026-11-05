@@ -2,7 +2,29 @@ import axios from 'axios';
 import { config } from '../config/index.js';
 import type { InterventionRule, RiskTier, ShapFactor, StudentFeatures } from '../../../contracts/types.js';
 
+/** The ML service could not be reached, timed out, or failed on its side. The API answers 503
+ * with this message (see toClientError in app.ts), so staff see why a prediction failed instead
+ * of a bare "Internal server error". `detail` is the technical cause, logged server-side only. */
+export class MlServiceUnavailableError extends Error {
+  readonly status = 503;
+  constructor(readonly detail: string) {
+    super('The AI prediction service is unavailable right now. Please try again shortly.');
+    this.name = 'MlServiceUnavailableError';
+  }
+}
+
+/** No response at all (refused, timed out, DNS) or a 5xx from the ML service means it is
+ * unavailable. A 4xx means it rejected the request, which is a different problem, so it is
+ * passed through unchanged. */
+export function toMlServiceError(error: unknown): unknown {
+  if (!axios.isAxiosError(error)) return error;
+  if (!error.response) return new MlServiceUnavailableError(`${error.code ?? 'no response'}: ${error.message}`);
+  if (error.response.status >= 500) return new MlServiceUnavailableError(`HTTP ${error.response.status} from the ML service`);
+  return error;
+}
+
 const client = axios.create({ baseURL: config.mlServiceUrl, timeout: 10_000 });
+client.interceptors.response.use(undefined, (error) => Promise.reject(toMlServiceError(error)));
 
 export interface MlPredictionResult {
   modelVersion: string;

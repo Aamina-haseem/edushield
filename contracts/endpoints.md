@@ -61,7 +61,9 @@ not just hidden in the frontend.
 
 `{ message }` with: 400 bad input (including malformed JSON, non-UUID ids, out-of-range values),
 401 missing/invalid token, 403 role or row-level denial, 404 not found, 409 duplicate, 429 too many
-failed logins, 500 anything unexpected (logged server-side, no details leaked).
+failed logins, 503 the ML service is unreachable, timed out or failed (prediction, intervention
+rules, model info — the cause is logged server-side), 500 anything unexpected (logged server-side,
+no details leaked).
 
 ## Internal-only (ml-service, not exposed to the frontend)
 
