@@ -5,7 +5,7 @@ import { AxiosError } from 'axios';
 import { isAllowedOrigin, toClientError } from '../src/app.js';
 import { MlServiceUnavailableError, toMlServiceError } from '../src/services/mlServiceClient.js';
 import { createLoginLimiter } from '../src/middleware/rateLimit.js';
-import { canAccessStudent } from '../src/middleware/auth.js';
+import { canAccessStudent, tokenPredatesPasswordReset } from '../src/middleware/auth.js';
 
 test('database input errors map to client errors, not 500s', () => {
   assert.deepEqual(toClientError({ code: '22P02' }), { status: 400, message: 'Invalid identifier or value' });
@@ -55,6 +55,15 @@ test('row-level access: staff see any student, a student only their own record',
   assert.equal(canAccessStudent({ ...base, sub: 'c', role: 'student', studentId: 's1' }, 's1'), true);
   assert.equal(canAccessStudent({ ...base, sub: 'c', role: 'student', studentId: 's1' }, 's2'), false);
   assert.equal(canAccessStudent({ ...base, sub: 'd', role: 'student', studentId: null }, 's1'), false);
+});
+
+test('a password reset ends sessions issued before it, but not a sign-in made after it', () => {
+  const reset = new Date('2026-11-12T10:00:00.700Z');
+  const resetSecond = Math.floor(reset.getTime() / 1000);
+  assert.equal(tokenPredatesPasswordReset(resetSecond - 60, reset), true); // signed in a minute earlier
+  assert.equal(tokenPredatesPasswordReset(resetSecond, reset), false); // signed in during the same second, after the reset
+  assert.equal(tokenPredatesPasswordReset(resetSecond + 5, reset), false);
+  assert.equal(tokenPredatesPasswordReset(resetSecond - 60, null), false); // never reset
 });
 
 test('the login limiter blocks after repeated failures and resets on success', () => {

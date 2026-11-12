@@ -2,7 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from '@/layouts/AppLayout';
 import { DashboardRouter } from '@/pages/DashboardRouter';
 import { StudentsPage } from '@/pages/StudentsPage';
-import { AddStudentPage } from '@/pages/AddStudentPage';
+import { AddStudentPage, EditStudentPage } from '@/pages/AddStudentPage';
 import { StudentDetailPage } from '@/pages/StudentDetailPage';
 import { PredictionsPage } from '@/pages/PredictionsPage';
 import { InterventionsPage } from '@/pages/InterventionsPage';
@@ -35,6 +35,7 @@ export function AppRouter() {
                 <Route path="students/new" element={<AddStudentPage />} />
               </Route>
               <Route path="students/:id" element={<StudentDetailPage />} />
+              <Route path="students/:id/edit" element={<EditStudentPage />} />
               <Route path="predictions" element={<PredictionsPage />} />
               <Route path="interventions" element={<InterventionsPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />

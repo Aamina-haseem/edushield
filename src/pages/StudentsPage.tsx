@@ -143,7 +143,7 @@ export function StudentsPage() {
                     <td>{s.programme}</td>
                     <td>Year {s.yearOfStudy}</td>
                     <td><span className={s.features.absences >= 13 ? 'font-bold text-red-600' : ''}>{s.features.absences}</span></td>
-                    <td>{s.features.g3}/20</td>
+                    <td>{s.features.g3 === null ? '—' : `${s.features.g3}/20`}</td>
                     <td>{risk ? <Pill tone={riskTone[risk.riskTier]}>{risk.riskTier} · {risk.riskScore}%</Pill> : <Pill tone="slate">Not assessed</Pill>}</td>
                     <td>
                       <button className="font-bold text-sky-700 dark:text-sky-300" onClick={() => navigate(`/students/${s.id}`)}>View</button>

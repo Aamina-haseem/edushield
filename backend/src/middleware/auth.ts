@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/index.js';
 import type { AuthTokenPayload, UserRole } from '../../../contracts/types.js';
+import { findSessionState } from '../db/users.js';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -12,17 +13,37 @@ declare global {
   }
 }
 
+/** True when a token was issued before the account's last password reset. JWT `iat` is in whole
+ * seconds, so a token issued in the same second as the reset (a fresh sign-in) still counts as after it. */
+export function tokenPredatesPasswordReset(iat: number, passwordChangedAt: Date | null): boolean {
+  if (!passwordChangedAt) return false;
+  return iat < Math.floor(passwordChangedAt.getTime() / 1000);
+}
+
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const header = req.headers.authorization;
   const token = header?.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) return res.status(401).json({ message: 'Missing bearer token' });
 
+  let payload: AuthTokenPayload;
   try {
-    req.auth = jwt.verify(token, config.jwtSecret) as AuthTokenPayload;
-    next();
+    payload = jwt.verify(token, config.jwtSecret) as AuthTokenPayload;
   } catch {
-    res.status(401).json({ message: 'Invalid or expired token' });
+    return res.status(401).json({ message: 'Invalid or expired token' });
   }
+
+  // The token is otherwise valid; also refuse it if the account is gone or its password was reset
+  // after the token was issued (POST /auth/reset-password ends earlier sessions).
+  findSessionState(payload.sub)
+    .then((state) => {
+      if (!state) return res.status(401).json({ message: 'Invalid or expired token' });
+      if (tokenPredatesPasswordReset(payload.iat, state.passwordChangedAt)) {
+        return res.status(401).json({ message: 'Your password was reset, so this session has ended. Please sign in again.' });
+      }
+      req.auth = payload;
+      next();
+    })
+    .catch(next);
 }
 
 /** Blocks roles outright. Row-level checks (e.g. "student can only read their own record")

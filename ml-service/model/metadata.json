@@ -129,7 +129,7 @@
     "LOW": 0
   },
   "featureLabels": {
-    "absences": "Attendance",
+    "absences": "Absences",
     "G1": "First-term grade",
     "G2": "Second-term grade",
     "failures": "Past failures",

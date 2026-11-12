@@ -44,6 +44,23 @@ export async function updatePasswordHash(id: string, passwordHash: string): Prom
   await pool.query('UPDATE users SET password_hash = $2, updated_at = now() WHERE id = $1', [id, passwordHash]);
 }
 
+/** Password reset: sets the new hash and ends every session issued before now (see requireAuth). */
+export async function resetPasswordHash(id: string, passwordHash: string): Promise<void> {
+  await pool.query(
+    'UPDATE users SET password_hash = $2, password_changed_at = now(), updated_at = now() WHERE id = $1',
+    [id, passwordHash],
+  );
+}
+
+/** For requireAuth: whether the account still exists, and when its password was last reset. */
+export async function findSessionState(id: string): Promise<{ passwordChangedAt: Date | null } | null> {
+  const { rows } = await pool.query<{ password_changed_at: Date | null }>(
+    'SELECT password_changed_at FROM users WHERE id = $1',
+    [id],
+  );
+  return rows[0] ? { passwordChangedAt: rows[0].password_changed_at } : null;
+}
+
 export async function listUserIdsByRole(role: AuthUser['role']): Promise<string[]> {
   const { rows } = await pool.query<{ id: string }>('SELECT id FROM users WHERE role = $1', [role]);
   return rows.map((r) => r.id);

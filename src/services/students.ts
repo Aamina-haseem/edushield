@@ -16,6 +16,12 @@ export async function createStudent(student: NewStudent): Promise<Student> {
   return data;
 }
 
+/** Staff only (PUT /students/:id): replaces the student's details and model inputs. Earlier predictions are kept. */
+export async function updateStudent(id: string, student: NewStudent): Promise<Student> {
+  const { data } = await apiClient.put<Student>(`/students/${id}`, student);
+  return data;
+}
+
 export async function listStudents(query?: string): Promise<Student[]> {
   const { data } = await apiClient.get<Student[]>('/students', { params: query ? { q: query } : undefined });
   return data;

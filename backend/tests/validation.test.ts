@@ -46,6 +46,18 @@ test('wrong types and missing identity fields are all reported together', () => 
   assert.ok(result.errors.includes("features.sex must be 'F' or 'M'"));
 });
 
+test('the final grade (g3) is optional: empty becomes null, a known grade must still be 0–20', () => {
+  const { g3: _omitted, ...withoutOutcome } = validStudent.features;
+  for (const features of [withoutOutcome, { ...validStudent.features, g3: null }]) {
+    const result = validateNewStudent({ ...validStudent, features });
+    assert.ok('value' in result);
+    assert.equal(result.value.features.g3, null);
+  }
+  const bad = validateNewStudent({ ...validStudent, features: { ...validStudent.features, g3: 25 } });
+  assert.ok('errors' in bad);
+  assert.ok(bad.errors.includes('features.g3 must be empty or an integer from 0 to 20'));
+});
+
 test('a missing body is rejected, not thrown on', () => {
   const result = validateNewStudent(undefined);
   assert.ok('errors' in result);

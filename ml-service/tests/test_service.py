@@ -76,6 +76,43 @@ class PredictEndpointTest(unittest.TestCase):
     def test_empty_body_is_a_400(self):
         self.assertEqual(self.client.post('/predict', data='not json', content_type='text/plain').status_code, 400)
 
+    def test_malformed_bodies_are_a_controlled_400(self):
+        for raw in ('[1, 2]', '"abc"', 'null', '42'):
+            res = self.client.post('/predict', data=raw, content_type='application/json')
+            self.assertEqual(res.status_code, 400, raw)
+        for bad in ({'g1': None}, {'g1': 'x'}, {'g1': 21}, {'g1': 7.5}, {'absences': True}, {'famsup': 'maybe'}):
+            res = self.predict({**AT_RISK, **bad})
+            self.assertEqual(res.status_code, 400, bad)
+            self.assertIn(next(iter(bad)), res.get_json()['error'])
+
+    def test_final_grade_is_not_needed_to_predict(self):
+        body = {k: v for k, v in AT_RISK.items() if k != 'g3'}
+        self.assertEqual(self.predict(body).status_code, 200)
+
+    def test_explanations_state_the_observed_value_and_never_contradict_it(self):
+        cases = [
+            {**AT_RISK, 'absences': 0},                                   # zero absences, weak grades
+            {**STRONG, 'absences': 30, 'studytime': 4, 'goout': 1},       # many absences, strong grades
+            {**AT_RISK, 'studytime': 4, 'goout': 1, 'failures': 3},       # unusual combination
+        ]
+        contradictions = ('High absence count', 'Consistent attendance', 'Low weekly study time',
+                          'Frequent social outings', 'No prior failures is', 'Previous module failures')
+        for body in cases:
+            for factor in self.predict(body).get_json()['shapFactors']:
+                text = factor['explanation']
+                for phrase in contradictions:
+                    self.assertNotIn(phrase, text)
+                if factor['rawFeature'] == 'absences':
+                    expected = 'No recorded absences' if body['absences'] == 0 else f"{body['absences']} recorded absences"
+                    self.assertTrue(text.startswith(expected), text)
+                if factor['rawFeature'] in ('g1', 'g2'):
+                    self.assertIn(f"{body[factor['rawFeature']]}/20", text)
+                if factor['contributionPct'] >= 1:
+                    word = 'higher' if factor['direction'] == 'increases' else 'lower'
+                    self.assertIn(f'a {word} risk', text)
+                else:
+                    self.assertIn('almost no effect', text)
+
 
 class MetadataEndpointsTest(unittest.TestCase):
     @classmethod
@@ -100,6 +137,10 @@ class MetadataEndpointsTest(unittest.TestCase):
         for rule in rules:
             self.assertIn(rule['triggerFeature'], contract_keys)
             self.assertIn(rule['tier'], {'HIGH', 'MEDIUM', 'LOW'})
+            self.assertLessEqual(set(rule.get('condition', {})), {'min', 'max', 'equals'})
+        # Grade-triggered tutoring must exist for High as well as Medium risk.
+        grade_tiers = {r['tier'] for r in rules if r['triggerFeature'] in ('g1', 'g2')}
+        self.assertEqual(grade_tiers, {'HIGH', 'MEDIUM'})
 
 
 if __name__ == '__main__':

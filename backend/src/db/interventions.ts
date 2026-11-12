@@ -39,13 +39,41 @@ export interface NewIntervention {
   assignedAdvisorId: string | null;
 }
 
-export async function createIntervention(data: NewIntervention): Promise<Intervention> {
-  const { rows } = await pool.query<InterventionRow>(
-    `INSERT INTO interventions (student_id, prediction_id, tier, recommended_actions, assigned_advisor_id)
-     VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-    [data.studentId, data.predictionId, data.tier, JSON.stringify(data.recommendedActions), data.assignedAdvisorId],
-  );
-  return toIntervention(rows[0]);
+/**
+ * Creates the intervention only if no open one exists for the same prediction. The check and the
+ * insert run in one transaction holding a per-prediction advisory lock, so two simultaneous
+ * requests (e.g. a double click) cannot both pass the check: the second waits, then sees the
+ * first one's plan. A lock is used rather than a unique index because the rule is "one *open*
+ * plan per prediction", and historical data from before this guard is kept as it was.
+ */
+export async function createInterventionIfNoneOpen(
+  data: NewIntervention & { predictionId: string },
+): Promise<{ created: Intervention } | { existing: Intervention }> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))', [data.predictionId]);
+    const open = await client.query<InterventionRow>(
+      `SELECT * FROM interventions WHERE prediction_id = $1 AND status <> 'completed' ORDER BY created_at DESC LIMIT 1`,
+      [data.predictionId],
+    );
+    if (open.rows[0]) {
+      await client.query('ROLLBACK');
+      return { existing: toIntervention(open.rows[0]) };
+    }
+    const { rows } = await client.query<InterventionRow>(
+      `INSERT INTO interventions (student_id, prediction_id, tier, recommended_actions, assigned_advisor_id)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [data.studentId, data.predictionId, data.tier, JSON.stringify(data.recommendedActions), data.assignedAdvisorId],
+    );
+    await client.query('COMMIT');
+    return { created: toIntervention(rows[0]) };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 export interface InterventionFilters {

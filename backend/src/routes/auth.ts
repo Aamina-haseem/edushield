@@ -9,6 +9,7 @@ import {
   findPasswordHashById,
   findUserByEmail,
   findUserById,
+  resetPasswordHash,
   updatePasswordHash,
 } from '../db/users.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -97,7 +98,9 @@ authRouter.post('/reset-password', asyncHandler(async (req, res) => {
 
   const userId = await consumePasswordResetToken(sha256(token));
   if (!userId) return res.status(400).json({ message: 'This reset link is invalid or has expired. Request a new one.' });
-  await updatePasswordHash(userId, await bcrypt.hash(newPassword!, 10));
+  // Ends every session issued before the reset: someone who reset a password because an account
+  // was exposed must not leave an old token working (checked in requireAuth).
+  await resetPasswordHash(userId, await bcrypt.hash(newPassword!, 10));
   res.status(204).end();
 }));
 

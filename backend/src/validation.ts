@@ -9,7 +9,7 @@ export function checkPassword(password: unknown): string | null {
 }
 
 /** Allowed ranges follow the UCI Student Performance codebook (ml-service/data/student.txt). */
-const INTEGER_RANGES: Record<Exclude<keyof StudentFeatures, 'sex' | BooleanFeature>, [number, number]> = {
+const INTEGER_RANGES: Record<Exclude<keyof StudentFeatures, 'sex' | 'g3' | BooleanFeature>, [number, number]> = {
   age: [15, 22],
   studytime: [1, 4],
   failures: [0, 4],
@@ -24,8 +24,9 @@ const INTEGER_RANGES: Record<Exclude<keyof StudentFeatures, 'sex' | BooleanFeatu
   fedu: [0, 4],
   g1: [0, 20],
   g2: [0, 20],
-  g3: [0, 20],
 };
+/** g3 (the observed final grade) is the outcome, not a model input: optional, 0–20 when known. */
+const FINAL_GRADE_RANGE: [number, number] = [0, 20];
 
 type BooleanFeature = 'schoolsup' | 'famsup' | 'paid' | 'activities' | 'higher' | 'internet' | 'romantic';
 const BOOLEAN_FEATURES: BooleanFeature[] = ['schoolsup', 'famsup', 'paid', 'activities', 'higher', 'internet', 'romantic'];
@@ -40,8 +41,8 @@ export interface NewStudentInput {
   features: StudentFeatures;
 }
 
-/** Validates a POST /students body. Returns the cleaned input, or the list of problems found. */
-export function validateNewStudent(body: unknown): { value: NewStudentInput } | { errors: string[] } {
+/** Validates a POST /students or PUT /students/:id body. Returns the cleaned input, or the list of problems found. */
+export function validateStudentInput(body: unknown): { value: NewStudentInput } | { errors: string[] } {
   const errors: string[] = [];
   const input = (body ?? {}) as Record<string, unknown>;
   const features = (input.features ?? {}) as Record<string, unknown>;
@@ -77,6 +78,10 @@ export function validateNewStudent(body: unknown): { value: NewStudentInput } | 
       errors.push(`features.${key} must be an integer from ${min} to ${max}`);
     }
   }
+  const finalGrade = features.g3 ?? null;
+  if (finalGrade !== null && (!Number.isInteger(finalGrade) || (finalGrade as number) < FINAL_GRADE_RANGE[0] || (finalGrade as number) > FINAL_GRADE_RANGE[1])) {
+    errors.push(`features.g3 must be empty or an integer from ${FINAL_GRADE_RANGE[0]} to ${FINAL_GRADE_RANGE[1]}`);
+  }
 
   if (errors.length) return { errors };
   return {
@@ -87,7 +92,10 @@ export function validateNewStudent(body: unknown): { value: NewStudentInput } | 
       programme,
       yearOfStudy: yearOfStudy as number,
       advisorId: advisorId as string | null,
-      features: features as unknown as StudentFeatures,
+      features: { ...(features as unknown as StudentFeatures), g3: finalGrade as number | null },
     },
   };
 }
+
+/** Kept for existing callers: creating and updating a student share one set of rules. */
+export const validateNewStudent = validateStudentInput;

@@ -263,7 +263,11 @@ export function PredictionsPage() {
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                 <Metric label="Absences" value={String(selectedStudent.features.absences)} warning={selectedStudent.features.absences >= 13} />
-                <Metric label="Grade (G3)" value={`${selectedStudent.features.g3}/20`} warning={selectedStudent.features.g3 < 10} />
+                <Metric
+                  label="Grade (G3)"
+                  value={selectedStudent.features.g3 === null ? 'Not yet known' : `${selectedStudent.features.g3}/20`}
+                  warning={selectedStudent.features.g3 !== null && selectedStudent.features.g3 < 10}
+                />
                 <Metric label="Failed modules" value={String(selectedStudent.features.failures)} warning={selectedStudent.features.failures > 0} />
                 <Metric label="Study time" value={['<2h', '2-5h', '5-10h', '>10h'][selectedStudent.features.studytime - 1] ?? '—'} />
                 <Metric label="Health" value={`${selectedStudent.features.health}/5`} warning={selectedStudent.features.health <= 2} />
@@ -284,10 +288,12 @@ export function PredictionsPage() {
               <Card className="overflow-hidden p-0">
                 <div className={`grid gap-6 p-6 lg:grid-cols-[260px_1fr] ${riskTier === 'HIGH' ? 'bg-red-50/60 dark:bg-red-950/10' : riskTier === 'MEDIUM' ? 'bg-amber-50/60 dark:bg-amber-950/10' : 'bg-emerald-50/60 dark:bg-emerald-950/10'}`}>
                   <div className="flex flex-col justify-center rounded-3xl bg-white p-6 text-center shadow-sm dark:bg-slate-950/70">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Dropout probability</p>
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Risk score (0–100)</p>
                     <p className={`mt-3 text-6xl font-black ${riskTier === 'HIGH' ? 'text-red-600 dark:text-red-300' : riskTier === 'MEDIUM' ? 'text-amber-600 dark:text-amber-300' : 'text-emerald-600 dark:text-emerald-300'}`}>{latestPrediction.riskScore}%</p>
                     <div className="mx-auto mt-3"><Pill tone={riskTone(riskTier)}>{riskTier} risk</Pill></div>
-                    <p className="mt-4 text-xs text-slate-500">Model confidence: <b>{latestPrediction.confidencePct}%</b></p>
+                    <p className="mt-4 text-xs text-slate-500" title="The probability the model gives its own prediction. It has not been calibrated, so treat it as a model score, not a measured confidence.">
+                      Uncalibrated model score: <b>{latestPrediction.confidencePct}%</b>
+                    </p>
                   </div>
                   <div className="flex flex-col justify-center">
                     <div className="flex items-center gap-3">

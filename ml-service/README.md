@@ -34,6 +34,14 @@ Performance dataset (1,044 rows, 209 in the test split): accuracy 90.9%, precisi
 - Without `G2` the cross-validated F1 drops to 0.670, and to 0.459 without any grades — the model
   relies heavily on term grades.
 
+Explanations (`app/explain.py`, mirrored in the notebook) state each factor's observed value and,
+separately, whether it raised or lowered this prediction. The wording never infers a value from the
+sign of a SHAP contribution, and `contributionPct` is a share of the explanation, not a change in risk.
+
+The rule table has 29 rules: tier defaults, plus factor rules for High and Medium risk that fire only
+when the factor is a top-three risk-increasing driver and its observed value meets the rule's
+condition. There is no financial-guidance rule: the dataset has no financial attributes.
+
 The v1 model (`xgboost-v1.0.0`, reported at 93.8% accuracy) had label leakage and student overlap
 between train and test; its artifacts and notebook are kept in `model/archive/` and
 `notebooks/archive/` for reference.
@@ -47,6 +55,8 @@ python -m app.main
 Serves on `http://127.0.0.1:8001`.
 
 - `GET /health` — liveness + loaded model version
-- `POST /predict` — body: `StudentFeatures`-shaped JSON (see `contracts/types.ts`, lowercase
-  keys e.g. `dalc` not `Dalc`) → `{ modelVersion, riskScore, riskTier, confidencePct, shapFactors }`
+- `POST /predict` — body: `PredictionInput`-shaped JSON (see `contracts/types.ts`, lowercase
+  keys e.g. `dalc` not `Dalc`; the outcome `g3` is not needed) → `{ modelVersion, riskScore, riskTier,
+  confidencePct, shapFactors }`. Anything that is not a JSON object, or a missing, `null`, wrongly
+  typed or out-of-range feature, gets a 400 naming the problem.
 - `GET /intervention-rules` — the generic rule table from `model/intervention_rules.json`

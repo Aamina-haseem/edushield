@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CalendarClock, CalendarPlus, Play } from 'lucide-react';
+import { ArrowLeft, CalendarClock, CalendarPlus, Pencil, Play } from 'lucide-react';
 import { PageHeader, Pill, SectionTitle, Stat } from '@/components/common/Page';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -95,6 +95,7 @@ export function StudentDetailPage() {
         actions={
           <>
             <Button variant="secondary" icon={<ArrowLeft size={16} />} onClick={() => navigate('/students')}>Back to directory</Button>
+            <Button variant="secondary" icon={<Pencil size={16} />} onClick={() => navigate(`/students/${student.id}/edit`)}>Edit details</Button>
             <Button variant="secondary" icon={<Play size={16} />} onClick={handleRunPrediction} disabled={isRunning}>
               {isRunning ? 'Running…' : 'Run new prediction'}
             </Button>
@@ -117,7 +118,7 @@ export function StudentDetailPage() {
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Stat label="Absences" value={String(student.features.absences)} note="Recorded absences" />
-        <Stat label="Final grade (G3)" value={`${student.features.g3}/20`} note={`G1 ${student.features.g1} · G2 ${student.features.g2}`} />
+        <Stat label="Final grade (G3)" value={student.features.g3 === null ? 'Not yet known' : `${student.features.g3}/20`} note={`G1 ${student.features.g1} · G2 ${student.features.g2}`} />
         <Stat label="Past failures" value={String(student.features.failures)} note="Previously failed modules" />
         <Stat label="Study time" value={['<2h', '2-5h', '5-10h', '>10h'][student.features.studytime - 1] ?? '—'} note="Weekly self-reported" />
       </section>
@@ -134,13 +135,19 @@ export function StudentDetailPage() {
               <div key={factor.rawFeature} className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-bold">{factor.feature}</p>
-                  <span className={`text-xs font-bold ${factor.direction === 'increases' ? 'text-red-600 dark:text-red-300' : 'text-emerald-600 dark:text-emerald-300'}`}>
-                    {factor.direction === 'increases' ? '+' : '-'}{factor.contributionPct.toFixed(0)}%
+                  <span
+                    className={`shrink-0 text-xs font-bold ${factor.direction === 'increases' ? 'text-red-600 dark:text-red-300' : 'text-emerald-600 dark:text-emerald-300'}`}
+                    title="This factor's share of the explanation, not a change in risk"
+                  >
+                    {factor.direction === 'increases' ? '↑ Raises' : '↓ Lowers'} · {factor.contributionPct.toFixed(0)}%
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{factor.explanation}</p>
               </div>
             ))}
+            <p className="text-xs text-slate-500 sm:col-span-2 dark:text-slate-400">
+              Percentages show each factor's share of this explanation, not a change in the risk score. They describe what the model associates with risk, not proven causes.
+            </p>
           </div>
         ) : (
           <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">Run a prediction to see SHAP-explained risk factors here.</p>

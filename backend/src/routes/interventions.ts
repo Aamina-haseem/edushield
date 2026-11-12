@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { canAccessStudent, requireAuth, requireRole } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import {
-  createIntervention,
+  createInterventionIfNoneOpen,
   findOpenInterventionForPrediction,
   getInterventionById,
   listInterventions,
@@ -69,13 +69,19 @@ interventionsRouter.post('/', requireRole('admin', 'advisor'), asyncHandler(asyn
   // Ownership default: an explicit assignee, else the advisor creating it, else the student's own advisor.
   const owner = assignedAdvisorId ?? (req.auth!.role === 'advisor' ? req.auth!.sub : student.advisorId);
 
-  const intervention = await createIntervention({
+  // The quick check above answers the common case early; this one is atomic, so simultaneous
+  // requests (a double click) still produce a single open plan.
+  const outcome = await createInterventionIfNoneOpen({
     studentId,
     predictionId,
     tier: prediction.riskTier,
     recommendedActions,
     assignedAdvisorId: owner ?? null,
   });
+  if ('existing' in outcome) {
+    return res.status(409).json({ message: 'An open intervention already exists for this prediction', intervention: outcome.existing });
+  }
+  const intervention = outcome.created;
   await notifyInterventionCreated(student, intervention, req.auth!.sub);
   res.status(201).json(intervention);
 }));

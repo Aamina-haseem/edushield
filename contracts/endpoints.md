@@ -16,7 +16,7 @@ not just hidden in the frontend.
 | POST | `/auth/logout` | any | stateless JWT: 204, the client discards the token |
 | POST | `/auth/change-password` | any | body `{ currentPassword, newPassword }` → 204; 400 if current is wrong or new fails the policy (8+ chars, a letter and a number) |
 | POST | `/auth/forgot-password` | public | body `{ email }` → same generic message whether or not the account exists; the one-time link (30 min) is written to the backend log (no mail service configured) |
-| POST | `/auth/reset-password` | public | body `{ token, newPassword }` → 204; 400 if the token is unknown, used or expired |
+| POST | `/auth/reset-password` | public | body `{ token, newPassword }` → 204; 400 if the token is unknown, used or expired. Ends every session issued before the reset: such tokens then get 401 |
 | GET | `/me` | any | the current `AuthUser` |
 | GET | `/me/dashboard` | student | own `Student`, latest `Prediction`, `Intervention[]`, `Notification[]` — the student id comes from the token, never from the request |
 
@@ -25,7 +25,8 @@ not just hidden in the frontend.
 | Method | Path | Roles | Notes |
 |---|---|---|---|
 | GET | `/students` | admin, advisor | `?q=` (name, number, programme) and `?programme=` filters |
-| POST | `/students` | admin | create a student; every feature range-checked (`backend/src/validation.ts`); duplicate number/email → 409 |
+| POST | `/students` | admin | create a student; every feature range-checked (`backend/src/validation.ts`); `features.g3` (observed final grade) is optional — `null` until known; duplicate number/email → 409 |
+| PUT | `/students/:id` | admin, advisor | replace a student's details and model inputs (same body and validation as POST) → updated `Student`; 404 if unknown; earlier predictions are kept |
 | GET | `/students/:id` | admin, advisor, or that student | 403 otherwise — the row-level enforcement point |
 | GET | `/students/:id/predictions` | admin, advisor, or self | prediction history, newest first |
 | GET | `/students/:id/interventions` | admin, advisor, or self | intervention history, newest first |
@@ -40,7 +41,7 @@ not just hidden in the frontend.
 |---|---|---|---|
 | GET | `/interventions` | admin, advisor | filters `?status=`, `?tier=`, `?assignedAdvisorId=` |
 | GET | `/interventions/:id` | admin, advisor, or self | |
-| POST | `/interventions` | admin, advisor | body `{ studentId, predictionId, assignedAdvisorId? }`; actions built from the rule table + the prediction's top SHAP factors; 409 if an open intervention already exists for that prediction; owner defaults to the creating advisor, else the student's advisor |
+| POST | `/interventions` | admin, advisor | body `{ studentId, predictionId, assignedAdvisorId? }`; actions built from the rule table + the prediction's top SHAP factors (a factor rule also needs its `condition` on the observed value; factor actions say which factors led to them); 409 if an open intervention already exists for that prediction — checked inside a locked transaction, so simultaneous requests still create only one; owner defaults to the creating advisor, else the student's advisor |
 | PATCH | `/interventions/:id` | admin, advisor | `status` (`pending` · `in_progress` · `completed`), `notes`, `nextMeetingAt` (ISO 8601 or null) — validated; a new meeting time notifies the student and assignee |
 | GET | `/notifications` | any | the caller's own notifications |
 | PATCH | `/notifications/:id/read` | any (owner only) | |
@@ -69,7 +70,7 @@ no details leaked).
 
 | Method | Path | Caller | Notes |
 |---|---|---|---|
-| POST | `/predict` | backend | body `StudentFeatures` → `{ modelVersion, riskScore, riskTier, confidencePct, shapFactors }`; 400 names any missing or invalid feature |
+| POST | `/predict` | backend | body `PredictionInput` (StudentFeatures without the outcome `g3`) → `{ modelVersion, riskScore, riskTier, confidencePct, shapFactors }`; 400 for anything that is not a JSON object, and names any missing, wrongly typed (incl. `null`) or out-of-range feature |
 | GET | `/health` | backend | `{ status, modelVersion }` — also used to drop cached rules/model info after a retrain |
 | GET | `/model-info` | backend | metadata written by the training notebook |
-| GET | `/intervention-rules` | backend | the generic (tier, triggerFeature) → action table |
+| GET | `/intervention-rules` | backend | the generic (tier, triggerFeature, optional condition) → action table (29 rules) |

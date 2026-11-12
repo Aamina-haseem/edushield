@@ -32,7 +32,7 @@ interface StudentRow {
   fedu: number;
   g1: number;
   g2: number;
-  g3: number;
+  g3: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -108,4 +108,21 @@ export async function createStudent(input: NewStudentInput): Promise<Student> {
     values,
   );
   return toStudent(rows[0]);
+}
+
+/** Replaces a student's identity fields and model inputs. Earlier predictions are kept untouched:
+ * each stored prediction records the observed value of every factor it used (ShapFactor.observedValue),
+ * so a past assessment stays interpretable after the record changes. Returns null if no such student. */
+export async function updateStudent(id: string, input: NewStudentInput): Promise<Student | null> {
+  const columns = ['student_number', 'name', 'email', 'programme', 'year_of_study', 'advisor_id', ...FEATURE_COLUMNS];
+  const values = [
+    input.studentNumber, input.name, input.email, input.programme, input.yearOfStudy, input.advisorId,
+    ...FEATURE_COLUMNS.map((col) => input.features[col]),
+  ];
+  const assignments = columns.map((col, i) => `${col} = $${i + 2}`).join(', ');
+  const { rows } = await pool.query<StudentRow>(
+    `UPDATE students SET ${assignments}, updated_at = now() WHERE id = $1 RETURNING *`,
+    [id, ...values],
+  );
+  return rows[0] ? toStudent(rows[0]) : null;
 }

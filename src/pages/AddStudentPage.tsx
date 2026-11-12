@@ -1,26 +1,26 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, UserPlus } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, Save, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageHeader, SectionTitle } from '@/components/common/Page';
 import type { ApiError } from '@/services/api-client';
-import { createStudent } from '@/services/students';
-import type { StudentFeatures } from '@/types/contract';
+import { createStudent, getStudent, updateStudent } from '@/services/students';
+import type { Student, StudentFeatures } from '@/types/contract';
 
 /** Field ranges and wording follow the UCI Student Performance codebook (ml-service/data/student.txt);
  * the backend validates the same ranges (backend/src/validation.ts). */
 const SCALE_1_5 = 'very low (1) to very high (5)';
-type NumberKey = Exclude<keyof StudentFeatures, 'sex' | 'schoolsup' | 'famsup' | 'paid' | 'activities' | 'higher' | 'internet' | 'romantic'>;
+type BooleanKey = 'schoolsup' | 'famsup' | 'paid' | 'activities' | 'higher' | 'internet' | 'romantic';
+type NumberKey = Exclude<keyof StudentFeatures, 'sex' | 'g3' | BooleanKey>;
 const NUMBER_FIELDS: { key: NumberKey; label: string; min: number; max: number; hint: string }[] = [
   { key: 'age', label: 'Age', min: 15, max: 22, hint: '15–22 years' },
   { key: 'studytime', label: 'Weekly study time', min: 1, max: 4, hint: '1 <2h · 2 2–5h · 3 5–10h · 4 >10h' },
   { key: 'failures', label: 'Past class failures', min: 0, max: 4, hint: '0–4' },
   { key: 'absences', label: 'Absences', min: 0, max: 93, hint: '0–93' },
   { key: 'g1', label: 'First-period grade (G1)', min: 0, max: 20, hint: '0–20' },
-  { key: 'g2', label: 'Second-period grade (G2)', min: 0, max: 20, hint: '0–20' },
-  { key: 'g3', label: 'Final grade (G3)', min: 0, max: 20, hint: '0–20 (enter the current or expected grade if not final yet)' },
+  { key: 'g2', label: 'Second-period grade (G2)', min: 0, max: 20, hint: '0–20 · required: the model needs the second-term grade, so it cannot assess a student before then' },
   { key: 'famrel', label: 'Family relationship quality', min: 1, max: 5, hint: SCALE_1_5 },
   { key: 'freetime', label: 'Free time after school', min: 1, max: 5, hint: SCALE_1_5 },
   { key: 'goout', label: 'Going out with friends', min: 1, max: 5, hint: SCALE_1_5 },
@@ -30,7 +30,7 @@ const NUMBER_FIELDS: { key: NumberKey; label: string; min: number; max: number; 
   { key: 'medu', label: "Mother's education", min: 0, max: 4, hint: '0 none · 1 primary · 2 5th–9th · 3 secondary · 4 higher' },
   { key: 'fedu', label: "Father's education", min: 0, max: 4, hint: '0 none · 1 primary · 2 5th–9th · 3 secondary · 4 higher' },
 ];
-const BOOLEAN_FIELDS: { key: 'schoolsup' | 'famsup' | 'paid' | 'activities' | 'higher' | 'internet' | 'romantic'; label: string }[] = [
+const BOOLEAN_FIELDS: { key: BooleanKey; label: string }[] = [
   { key: 'schoolsup', label: 'Extra educational support' },
   { key: 'famsup', label: 'Family educational support' },
   { key: 'paid', label: 'Extra paid classes' },
@@ -43,7 +43,7 @@ const BOOLEAN_FIELDS: { key: 'schoolsup' | 'famsup' | 'paid' | 'activities' | 'h
 const DEFAULT_FEATURES: StudentFeatures = {
   age: 17, sex: 'F', studytime: 2, failures: 0, schoolsup: false, famsup: true, paid: false, activities: false,
   higher: true, internet: true, romantic: false, famrel: 4, freetime: 3, goout: 3, dalc: 1, walc: 2, health: 3,
-  absences: 0, medu: 2, fedu: 2, g1: 10, g2: 10, g3: 10,
+  absences: 0, medu: 2, fedu: 2, g1: 10, g2: 10, g3: null,
 };
 
 const inputClass = 'mt-2 w-full rounded-2xl border border-slate-200 bg-transparent px-4 py-2.5 text-sm font-normal outline-none focus:border-sky-500 dark:border-slate-700';
@@ -58,23 +58,48 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   );
 }
 
+/** Administrator: add a student (route /students/new). */
 export function AddStudentPage() {
+  return <StudentForm />;
+}
+
+/** Staff: edit an existing student's details and model inputs (route /students/:id/edit). */
+export function EditStudentPage() {
+  const { id } = useParams<{ id: string }>();
+  const studentQuery = useQuery({ queryKey: ['student', id], queryFn: () => getStudent(id!), enabled: Boolean(id) });
+
+  if (studentQuery.isLoading) return <Card className="p-6 text-sm text-slate-500">Loading student record…</Card>;
+  if (studentQuery.isError || !studentQuery.data) {
+    return <Card className="p-6 text-sm text-red-600" role="alert">{(studentQuery.error as ApiError | null)?.message ?? 'Student not found.'}</Card>;
+  }
+  return <StudentForm existing={studentQuery.data} />;
+}
+
+function StudentForm({ existing }: { existing?: Student }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [identity, setIdentity] = useState({ studentNumber: '', name: '', email: '', programme: '', yearOfStudy: 1 });
-  const [features, setFeatures] = useState<StudentFeatures>(DEFAULT_FEATURES);
+  const [identity, setIdentity] = useState(() => (existing
+    ? { studentNumber: existing.studentNumber, name: existing.name, email: existing.email, programme: existing.programme, yearOfStudy: existing.yearOfStudy }
+    : { studentNumber: '', name: '', email: '', programme: '', yearOfStudy: 1 }));
+  const [features, setFeatures] = useState<StudentFeatures>(() => (existing ? { ...existing.features } : DEFAULT_FEATURES));
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
   const setFeature = <K extends keyof StudentFeatures>(key: K, value: StudentFeatures[K]) => setFeatures((current) => ({ ...current, [key]: value }));
+  const backTo = existing ? `/students/${existing.id}` : '/students';
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
     setSaving(true);
     try {
-      const student = await createStudent({ ...identity, advisorId: null, features });
-      await queryClient.invalidateQueries({ queryKey: ['students'] });
+      const student = existing
+        ? await updateStudent(existing.id, { ...identity, advisorId: existing.advisorId, features })
+        : await createStudent({ ...identity, advisorId: null, features });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['students'] }),
+        queryClient.invalidateQueries({ queryKey: ['student', student.id] }),
+      ]);
       navigate(`/students/${student.id}`);
     } catch (err) {
       setError((err as ApiError).message);
@@ -86,9 +111,11 @@ export function AddStudentPage() {
     <form className="space-y-7" onSubmit={handleSubmit}>
       <PageHeader
         eyebrow="Student record"
-        title="Add student"
-        description="Create a student record. Run a prediction from the student's page once it is saved."
-        actions={<Button type="button" variant="secondary" icon={<ArrowLeft size={16} />} onClick={() => navigate('/students')}>Back to directory</Button>}
+        title={existing ? `Edit ${existing.name}` : 'Add student'}
+        description={existing
+          ? 'Update details and model inputs, for example a new term grade. Earlier predictions are kept; run a new prediction afterwards to assess the updated record.'
+          : "Create a student record. Run a prediction from the student's page once it is saved."}
+        actions={<Button type="button" variant="secondary" icon={<ArrowLeft size={16} />} onClick={() => navigate(backTo)}>{existing ? 'Back to record' : 'Back to directory'}</Button>}
       />
 
       <Card className="p-6">
@@ -127,8 +154,27 @@ export function AddStudentPage() {
         </div>
       </Card>
 
+      <Card className="p-6">
+        <SectionTitle title="Observed outcome" description="Not used to make predictions" />
+        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <Field label="Final grade (G3) — optional" hint="Leave blank until the final grade is actually known. It is recorded for reference only; the model never uses it.">
+            <input
+              className={inputClass}
+              type="number"
+              min={0}
+              max={20}
+              step={1}
+              value={features.g3 ?? ''}
+              onChange={(e) => setFeature('g3', e.target.value === '' ? null : Number(e.target.value))}
+            />
+          </Field>
+        </div>
+      </Card>
+
       {error && <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200" role="alert">{error}</p>}
-      <Button type="submit" icon={<UserPlus size={16} />} disabled={saving}>{saving ? 'Saving…' : 'Save student'}</Button>
+      <Button type="submit" icon={existing ? <Save size={16} /> : <UserPlus size={16} />} disabled={saving}>
+        {saving ? 'Saving…' : existing ? 'Save changes' : 'Save student'}
+      </Button>
     </form>
   );
 }

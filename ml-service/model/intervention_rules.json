@@ -20,6 +20,11 @@
     "action": "Suggest joining a study group"
   },
   {
+    "tier": "MEDIUM",
+    "triggerFeature": "default",
+    "action": "Offer a peer mentor from the same course"
+  },
+  {
     "tier": "LOW",
     "triggerFeature": "default",
     "action": "Provide positive reinforcement"
@@ -32,41 +37,177 @@
   {
     "tier": "HIGH",
     "triggerFeature": "absences",
+    "condition": {
+      "min": 6
+    },
     "action": "Arrange an urgent attendance review meeting"
+  },
+  {
+    "tier": "MEDIUM",
+    "triggerFeature": "absences",
+    "condition": {
+      "min": 6
+    },
+    "action": "Discuss recent absences and agree an attendance plan"
   },
   {
     "tier": "HIGH",
     "triggerFeature": "failures",
+    "condition": {
+      "min": 1
+    },
     "action": "Refer to academic recovery / repeat-module support"
   },
   {
-    "tier": "HIGH",
-    "triggerFeature": "dalc",
-    "action": "Refer to student wellbeing and counseling services"
+    "tier": "MEDIUM",
+    "triggerFeature": "failures",
+    "condition": {
+      "min": 1
+    },
+    "action": "Review past failed modules and offer catch-up support"
   },
   {
     "tier": "HIGH",
-    "triggerFeature": "walc",
-    "action": "Refer to student wellbeing and counseling services"
+    "triggerFeature": "g1",
+    "condition": {
+      "max": 11
+    },
+    "action": "Arrange one-to-one tutoring in the weakest subjects"
   },
   {
     "tier": "MEDIUM",
     "triggerFeature": "g1",
+    "condition": {
+      "max": 11
+    },
     "action": "Recommend tutoring or supplementary academic support"
+  },
+  {
+    "tier": "HIGH",
+    "triggerFeature": "g2",
+    "condition": {
+      "max": 11
+    },
+    "action": "Arrange one-to-one tutoring in the weakest subjects"
   },
   {
     "tier": "MEDIUM",
     "triggerFeature": "g2",
+    "condition": {
+      "max": 11
+    },
     "action": "Recommend tutoring or supplementary academic support"
   },
   {
+    "tier": "HIGH",
+    "triggerFeature": "dalc",
+    "condition": {
+      "min": 3
+    },
+    "action": "Refer to student wellbeing and counseling services"
+  },
+  {
     "tier": "MEDIUM",
-    "triggerFeature": "famsup",
-    "action": "Connect with student support services for family support options"
+    "triggerFeature": "dalc",
+    "condition": {
+      "min": 3
+    },
+    "action": "Offer a confidential wellbeing check-in"
+  },
+  {
+    "tier": "HIGH",
+    "triggerFeature": "walc",
+    "condition": {
+      "min": 3
+    },
+    "action": "Refer to student wellbeing and counseling services"
+  },
+  {
+    "tier": "MEDIUM",
+    "triggerFeature": "walc",
+    "condition": {
+      "min": 3
+    },
+    "action": "Offer a confidential wellbeing check-in"
+  },
+  {
+    "tier": "HIGH",
+    "triggerFeature": "studytime",
+    "condition": {
+      "max": 2
+    },
+    "action": "Refer to a study-skills workshop"
   },
   {
     "tier": "MEDIUM",
     "triggerFeature": "studytime",
+    "condition": {
+      "max": 2
+    },
     "action": "Refer to a study-skills workshop"
+  },
+  {
+    "tier": "HIGH",
+    "triggerFeature": "famsup",
+    "condition": {
+      "equals": "no"
+    },
+    "action": "Connect with student support services for family support options"
+  },
+  {
+    "tier": "MEDIUM",
+    "triggerFeature": "famsup",
+    "condition": {
+      "equals": "no"
+    },
+    "action": "Connect with student support services for family support options"
+  },
+  {
+    "tier": "HIGH",
+    "triggerFeature": "goout",
+    "condition": {
+      "min": 4
+    },
+    "action": "Discuss time management and balancing social commitments"
+  },
+  {
+    "tier": "MEDIUM",
+    "triggerFeature": "goout",
+    "condition": {
+      "min": 4
+    },
+    "action": "Discuss time management and balancing social commitments"
+  },
+  {
+    "tier": "HIGH",
+    "triggerFeature": "health",
+    "condition": {
+      "max": 2
+    },
+    "action": "Refer to student health services"
+  },
+  {
+    "tier": "MEDIUM",
+    "triggerFeature": "health",
+    "condition": {
+      "max": 2
+    },
+    "action": "Refer to student health services"
+  },
+  {
+    "tier": "HIGH",
+    "triggerFeature": "higher",
+    "condition": {
+      "equals": "no"
+    },
+    "action": "Arrange a careers and study-goals conversation"
+  },
+  {
+    "tier": "MEDIUM",
+    "triggerFeature": "higher",
+    "condition": {
+      "equals": "no"
+    },
+    "action": "Arrange a careers and study-goals conversation"
   }
 ]

@@ -33,7 +33,7 @@ export function StudentDashboardPage() {
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Stat label="Programme" value={student.programme} note={`Year ${student.yearOfStudy}`} />
-        <Stat label="Final grade (G3)" value={`${student.features.g3}/20`} note={`G1 ${student.features.g1} · G2 ${student.features.g2}`} />
+        <Stat label="Final grade (G3)" value={student.features.g3 === null ? 'Not yet known' : `${student.features.g3}/20`} note={`G1 ${student.features.g1} · G2 ${student.features.g2}`} />
         <Stat label="Absences" value={String(student.features.absences)} note="Recorded absences" />
         <Stat label="Past failures" value={String(student.features.failures)} note="Modules previously failed" />
       </section>
@@ -55,13 +55,19 @@ export function StudentDashboardPage() {
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-bold">{factor.feature}</p>
-                  <span className={`text-xs font-bold ${factor.direction === 'increases' ? 'text-red-600 dark:text-red-300' : 'text-emerald-600 dark:text-emerald-300'}`}>
-                    {factor.direction === 'increases' ? '+' : '-'}{factor.contributionPct.toFixed(0)}%
+                  <span
+                    className={`shrink-0 text-xs font-bold ${factor.direction === 'increases' ? 'text-red-600 dark:text-red-300' : 'text-emerald-600 dark:text-emerald-300'}`}
+                    title="This factor's share of the explanation, not a change in risk"
+                  >
+                    {factor.direction === 'increases' ? '↑ Raises' : '↓ Lowers'} · {factor.contributionPct.toFixed(0)}%
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{factor.explanation}</p>
               </motion.div>
             ))}
+            <p className="text-xs text-slate-500 sm:col-span-2 dark:text-slate-400">
+              Percentages show each factor's share of this explanation, not a change in your risk score. They describe what the model associates with risk, not proven causes.
+            </p>
           </div>
         </Card>
       ) : (

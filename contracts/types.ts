@@ -44,8 +44,14 @@ export interface StudentFeatures {
   fedu: 0 | 1 | 2 | 3 | 4; // father's education
   g1: number; // first period grade (0-20)
   g2: number; // second period grade (0-20)
-  g3: number; // final grade (0-20) — used with `failures` to derive the training label
+  /** Observed final grade (0-20): the outcome the model was trained to anticipate (label G3 < 10),
+   *  never a model input. Null until the final grade is actually known. */
+  g3: number | null;
 }
+
+/** The features sent to the model: everything except the outcome. The model needs g2
+ *  (the second-term grade), so it cannot assess a student before the second term. */
+export type PredictionInput = Omit<StudentFeatures, 'g3'>;
 
 /** University-facing identity wrapper around a student's raw features. */
 export interface Student {
@@ -78,9 +84,9 @@ export interface ShapFactor {
   feature: string; // human-readable label, e.g. "Attendance"
   rawFeature: keyof StudentFeatures; // underlying column, e.g. "absences"
   observedValue: string | number; // e.g. "45%" or 3
-  contributionPct: number; // 0-100, magnitude only
+  contributionPct: number; // 0-100: this factor's share of the explanation, NOT a change in risk in percentage points
   direction: 'increases' | 'decreases';
-  explanation: string; // one human-readable sentence
+  explanation: string; // states the observed value, then the direction; never infers the value from the sign
 }
 
 export interface Prediction {
@@ -89,7 +95,7 @@ export interface Prediction {
   modelVersion: string; // e.g. "rf-v1.0.0" — identifies which trained artifact produced this
   riskScore: number; // 0-100
   riskTier: RiskTier;
-  confidencePct: number; // model's own confidence, 0-100
+  confidencePct: number; // probability the model gives its predicted class (max(p, 1 - p)), 0-100; an uncalibrated model score, not a measured confidence
   shapFactors: ShapFactor[]; // sorted by contributionPct desc
   predictedAt: string; // ISO 8601
 }
@@ -124,6 +130,10 @@ export interface InterventionRule {
   tier: RiskTier;
   triggerFeature: keyof StudentFeatures | 'default'; // 'default' = tier-level fallback action
   action: string;
+  /** Optional check on the factor's observed value (ShapFactor.observedValue). A factor rule fires
+   *  only when the factor is a top risk-increasing driver AND this condition holds, so the sign
+   *  of a SHAP value alone never sends a student to support they do not need. */
+  condition?: { min?: number; max?: number; equals?: string };
 }
 
 // ---------------------------------------------------------------------------

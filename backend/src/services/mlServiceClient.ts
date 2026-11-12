@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { config } from '../config/index.js';
-import type { InterventionRule, RiskTier, ShapFactor, StudentFeatures } from '../../../contracts/types.js';
+import type { InterventionRule, PredictionInput, RiskTier, ShapFactor, StudentFeatures } from '../../../contracts/types.js';
 
 /** The ML service could not be reached, timed out, or failed on its side. The API answers 503
  * with this message (see toClientError in app.ts), so staff see why a prediction failed instead
@@ -34,8 +34,12 @@ export interface MlPredictionResult {
   shapFactors: ShapFactor[];
 }
 
+/** Sends only the prediction-time inputs: the observed final grade (g3) is the outcome the model
+ * anticipates, so it is never part of the payload (and may not even be known yet). */
 export async function requestPrediction(features: StudentFeatures): Promise<MlPredictionResult> {
-  const { data } = await client.post<MlPredictionResult>('/predict', features);
+  const { g3: _outcome, ...inputs }: StudentFeatures = features;
+  const payload: PredictionInput = inputs;
+  const { data } = await client.post<MlPredictionResult>('/predict', payload);
   return data;
 }
 
